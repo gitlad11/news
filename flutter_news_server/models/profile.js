@@ -14,6 +14,7 @@ var profileSchema = new Schema({
         type : String, require: true, maxLength: 80
     },
     liked : [],
+    posts : [],
     following : []
 })
 

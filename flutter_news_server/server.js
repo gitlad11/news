@@ -13,7 +13,7 @@ const Profile = require('./models/profile')
 const Favorite = require('./models/favorite')
 const Coment = require('./models/coment')
 const Post = require('./models/post')
-
+const Follow = require('./models/follow')
 
 var PORT = process.env.PORT || 3002
 var HOST = process.env.HOST || 'http://localhost'
@@ -161,8 +161,9 @@ app.post('/create_post', imgHandler.single('image'), (req, res) => {
       })
     }
     post.save().then((post) =>{
-      console.log(post)
-      return res.status(200).json({'success' : true })
+      Profile.findOneAndUpdate({"email" : req.body.author }, { $push : { posts : { id : post.id }  } }).then((profile) => {
+        return res.status(200).json({'success' : true })
+      })
     }).catch(error => {
       console.log(error)
       return res.status(500).json({'success' : false , 'message' : error.message })
@@ -184,46 +185,60 @@ app.post('/post_like', (req, res) => {
       post_id : req.body.id,
       email : req.body.email,
     })
-    Profile.findOneAndUpdate({ "email" : req.body.email }, { $push : { liked : req.body.id } }).then((profile) => {
-      console.log(profile)
-    })
     Favorite.findOne({ email : req.body.email, post_id : req.body.id }).then((fav) => {
         if(!fav){
           favorite.save().then((favorite) => {
             Post.findOneAndUpdate({ "_id" : req.body.id }, { $push : { liked : { email : req.body.email, image : req.body.image } }},
             (err, result) =>{
-            
-              if(err){ 
-                return res.status(200).send({"success" : false, "message" : "произошла ошибка!"})
-               }
-              else { 
-                return res.status(200).send({ "success" : true, "message" : "Добавлено!" })
-               }
+              Profile.findOneAndUpdate({ "email" : req.body.email }, { $push : { liked : { id : req.body.id } } }).then((profile) => {
+                  console.log(profile)
+                  if(err){ 
+                    return res.status(200).send({"success" : false, "message" : "произошла ошибка!"})
+                   }
+                  else { 
+                    return res.status(200).send({ "success" : true, "message" : "Добавлено!" })
+                   }
+              })
             })
           })
         } else {
-          
+          Favorite.findOneAndDelete({ post_id : req.body.id }).then((deleted) => {
+            Post.findOneAndUpdate( {"_id": req.body.id,}, { $pull: {liked : { email :  req.body.email } }}).then((deleted) => {
+              Profile.findOneAndUpdate( {"email": req.body.email }, { $pull: { liked : { id : req.body.id } }}).then((deleted) => {
+                console.log(deleted)
+                return res.status(200).send({ "success" : false, "message" : "Удаленно!" })
+              })
+            })
+          })
         }
     })
   }
 })
 
 app.post('/favorite', (req, res) => {
-  const list = [];
-  for(i in req.body.items){
-      console.log(req.body.items)
-      list.push(i)
-  }
-  console.log(list)
-  if(list.length > 1){
-    Post.find({'_id' : { $in : list }}).then((posts) => {
-      res.json({ "success" : true, "favorite" : posts })
+  if(req.body.items){
+    Post.find({'_id' : { $in : req.body.items }}).then((posts) => {
+      console.log(posts)
+     return res.json({ "success" : true, "favorite" : posts })
     })
+  } else {
+    return res.json({ 'success' : false, "favorite" : [] })
   }
 })
 
-app.post('/post_coment', (req, res) => {
+app.post('/posts', (req, res) => {
+  if(req.body.items){
+    Post.find({ 'id' : req.body.items }).then((posts) => {
+      console.log(posts)
+      return res.json({ "success" : true, "favorite" : posts })
+    })
+  } else {
+    return res.json({ 'success' : false, "favorite" : [] })
+  }
+})
 
+
+app.post('/post_coment', (req, res) => {
   if(req.body){
     const coment = new Coment({
       from : req.body.email,
@@ -248,12 +263,51 @@ app.post('/post_coment', (req, res) => {
   }
 })
 
+app.post('/following', (req, res) => {
+  if(req.body){
+    const follow = new Follow({
+      on_email : req.body.on,
+      email : req.body.from,
+    })
+    Follow.findOne({ on_email : req.body.on , email : req.body.from }).then((foll) => {
+
+        if(!foll){
+    
+          follow.save().then((follow) => {
+          Profile.findOneAndUpdate({ 'email' : req.body.on }, { $push : { following : { "email" : req.body.from } } }).then((profile) => {
+         
+            if(profile){
+              return res.send({ "success" : true,"follow" : true, "message" : "Вы подписались!" })
+            } else {
+              return res.send({ "success" : false, "message" : "произошла ошибка!" })
+            }
+          })
+        
+        })
+      } else {
+      
+          Follow.findOneAndDelete({ on_email : req.body.on, email : req.body.from }).then((follow) => {
+            console.log(follow)
+            Profile.findOneAndUpdate({ email : req.body.on }, { $pull : { following : { "email" : req.body.from } } }).then((profile) => {
+              return res.send({ "success" : true, "follow" : false, "message" : "Вы отписались!" })
+            })
+          }).catch((error) => console.log(error))
+        }
+    })
+  }
+})
+
 app.get('/posts', (req, res) => {
     const Posts = Post.find({}).then((posts) => {
       return res.status(200).json(posts)
     })
 })
 
+app.get('/profiles', (req, res) => {
+    const profiles = Profile.find({}).then((profiles) => {
+      return res.status(200).json(profiles)
+    })
+})
 
 
 mongoose.connect(MongoURI,
@@ -262,6 +316,6 @@ mongoose.connect(MongoURI,
   mongoose.connection.on('error', error => {
     console.log(`error with mongodb :` + error)
   })
-  console.log('connected to collection ')
+  console.log('connected to collection')
   })
 app.listen(PORT, console.log(`server is running on ${PORT}`))
