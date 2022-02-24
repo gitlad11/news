@@ -297,6 +297,7 @@ app.post('/following', (req, res) => {
   }
 })
 
+
 app.get('/posts', (req, res) => {
     const Posts = Post.find({}).then((posts) => {
       return res.status(200).json(posts)
