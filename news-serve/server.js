@@ -8,6 +8,7 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2
 const config = require('./config')
 const { CloudinaryStorage } = require('multer-storage-cloudinary')
+const bcrypt = require('bcrypt')
 
 const Profile = require('./models/profile')
 const Favorite = require('./models/favorite')
@@ -97,16 +98,23 @@ app.post('/registration', async (req, res) => {
 })
 
 
-app.post('/login',  (req, res) =>{
+app.post('/login', async (req, res) => {
+
   if(req.body){
-		Profile.findOne({ email : req.body.email }).then((profile) =>{
+		Profile.findOne({ email : req.body.email }).then( async (profile) =>{
 			if(!profile){
-        console.log("profile is not found")
+    
 				return res.status(404).json({ 'success' : false, 'error' : true, 'message' : 'профиль не найден!' })
-			} else {
-        console.log("profile is found")
-				const token = jwt.sign({ id : profile.id }, "secret", { expiresIn : 1000000 })
-				return res.send({ 'success' : true , 'error' : false, 'token' : token })
+			} 
+      else {
+        var password = await profile.comparePassword(req.body.password)
+
+        if(!password){
+          return res.status(404).json({ 'success' : false, 'message' : "Неправильный пароль" })
+        } else {          
+				  const token = jwt.sign({ id : profile.id }, "secret", { expiresIn : 1000000 })
+				  return res.send({ 'success' : true , 'error' : false, 'token' : token })
+        }
 			}
 		})
   }
@@ -218,7 +226,7 @@ app.post('/post_like', (req, res) => {
 app.post('/favorite', (req, res) => {
   if(req.body.items){
     Post.find({'_id' : { $in : req.body.items }}).then((posts) => {
-      console.log(posts)
+
      return res.json({ "success" : true, "favorite" : posts })
     })
   } else {
@@ -228,8 +236,8 @@ app.post('/favorite', (req, res) => {
 
 app.post('/posts', (req, res) => {
   if(req.body.items){
-    Post.find({ 'id' : req.body.items }).then((posts) => {
-      console.log(posts)
+    Post.find({ '_id' : { $in : req.body.items }}).then((posts) => {
+  
       return res.json({ "success" : true, "favorite" : posts })
     })
   } else {

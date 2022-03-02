@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
 
 const Schema = mongoose.Schema
 
@@ -11,11 +12,28 @@ var profileSchema = new Schema({
     },
     
 	password : {
-        type : String, require: true, maxLength: 80
+        type : String, require: true
     },
     liked : [],
     posts : [],
     following : []
+})
+
+profileSchema.methods.comparePassword = async function comparePassword(password, callback){
+    var hash = await bcrypt.compare(password, this.password);
+    if(hash){
+        return true
+    } else {
+        return false
+    }
+  };
+
+profileSchema.pre("save", function(next){
+	if(!this.isModified("password")){
+		return next();
+	}
+	this.password = bcrypt.hashSync(this.password, 10);
+	next();
 })
 
 module.exports = mongoose.model('Profile', profileSchema)
