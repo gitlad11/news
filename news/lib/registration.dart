@@ -159,7 +159,7 @@ class Registration_state extends State<Registration>{
                       children: <Widget>[
                         const Text("Уже есть профиль?",style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                         GestureDetector(
-                          onTap: (){ Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));},
+                          onTap: (){ Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Login()));},
                           child: const Text("  Войти", style : TextStyle( fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                         )
                       ],

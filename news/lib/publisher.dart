@@ -7,7 +7,7 @@ import 'package:news/user.dart';
 
 class Publisher extends StatefulWidget{
   int index;
-  late String avatar;
+  late dynamic avatar;
   late String  email;
   late List following;
   late List posts;
@@ -93,7 +93,7 @@ class Publisher_state extends State<Publisher>{
                   child: ClipOval(
                       child: Material(
                         color: Colors.transparent,
-                        child: widget.avatar.length > 1 ?
+                        child: widget.avatar != null ?
                         Image.network(widget.avatar, width: 79, height: 79)
                             : Ink.image(
                           image: const AssetImage('images/user.png'),

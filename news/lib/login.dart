@@ -54,7 +54,7 @@ class Login_state extends State<Login>{
       if(token.runtimeType == String){
         var auth = await Provider.of<ProfileProvider>(context, listen: false).initUser();
         if(auth == true){
-          return Navigator.push(context, MaterialPageRoute(builder: (context) => Profile()));
+          return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Profile()));
         }
       }
 
@@ -169,7 +169,7 @@ class Login_state extends State<Login>{
                     children: <Widget>[
                       const Text("Создать новый профиль", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                       GestureDetector(
-                        onTap : (){ Navigator.push(context, MaterialPageRoute(builder: (context) => Registration()));  },
+                        onTap : (){ Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Registration()));  },
                         child: const Text("  Регистрация", style: TextStyle( fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
                       )
                     ],

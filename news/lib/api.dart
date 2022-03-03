@@ -60,9 +60,18 @@ Future login(form) async {
   }
 }
 
-Future upload_image(email, File image) async {
+Future upload_image(email, old_image, File image) async {
+  var i;
+  if(old_image != null){
+     i = old_image.split('/')[8];
+     i = i.split('.')[0];
+  } else {
+    i = "";
+  }
+
   var request = http.MultipartRequest("POST", Uri.https('news-serve.herokuapp.com', '/image'));
   request.fields['user'] = email;
+  request.fields['old_image'] = i;
   request.files.add(
       http.MultipartFile(
           'image',

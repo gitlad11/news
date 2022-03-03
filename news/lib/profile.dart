@@ -42,7 +42,7 @@ class Profile_state extends State<Profile>{
     setState(() {
       loading = true;
     });
-    var result = await upload_image(widget.profile['email'] , imageFile);
+    var result = await upload_image(Provider.of<ProfileProvider>(context, listen: false).profile['email'], Provider.of<ProfileProvider>(context, listen: false).profile['image'] , imageFile);
     if(result == true){
       auth();
     }
@@ -65,14 +65,7 @@ class Profile_state extends State<Profile>{
 
 
   auth() async {
-    var profile = await authenticate();
-    if(profile != null){
-      setState(() {
-        widget.profile = profile;
-      });
-    } else {
-      ///Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Registration() ));
-    }
+    Provider.of<ProfileProvider>(context, listen: false).initUser();
   }
 
   log_out() async {
@@ -99,12 +92,12 @@ class Profile_state extends State<Profile>{
             Container(
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                  gradient:  LinearGradient(
                       begin: Alignment(-1.0, -1),
                       end: Alignment(-1.0, 1),
                       colors: [Colors.purpleAccent, Colors.purple, Colors.deepPurpleAccent]),
-                  borderRadius: BorderRadius.circular(8)
+
               ),
             ),
             ///SHADOW FOR GRADIENT BACKGROUND
